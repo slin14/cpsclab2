@@ -104,7 +104,7 @@ int main(void)
  * Displays a menu, asks the user to choose a menu item, and returns
  * a valid menu choice.
  *
- * Using fgets and sscanf_s ensures that we only accept correct
+ * Using fgets and sscanf ensures that we only accept correct
  * user input: an integer representing one of the numbered
  * menu items, that is neither preceded nor proceeded by any
  * additional input except for white space.
@@ -141,7 +141,8 @@ int get_menu_choice(char* menu_name,
     }
   }
   /* Disallows incorrect menu choices by accepting [0, #ofchoices] and ignoring other input */
-  while (sscanf_s(line, "%d%s", &menu_item, extra, BUFSIZE) != 1
+  // while (sscanf(line, "%d%s", &menu_item, extra, BUFSIZE) != 1
+  while (sscanf(line, "%d%s", &menu_item, extra) != 1
     || menu_item < 0 || menu_item > number_of_choices);
   return menu_item;
 }
@@ -200,11 +201,13 @@ int load_file(char** sample_segment, char*** candidate_segments)
   printf("Loading file %s\n", file_name);
 
   /* Opens file */
-  error = fopen_s(&fp, file_name, "r");
+  // error = fopen(&fp, file_name, "r");
+  fp = fopen(file_name, "r");
 
   /* If the return value specifies that the file cannot be opened,
   prints a suitable message to standard output and returns 0 */
-  if (error != 0) {
+  if (fp == NULL) {
+  // if (error != 0) {
     fprintf(stderr, "File %s cannot be loaded\n", file_name);
     return 0;
   }
@@ -255,7 +258,8 @@ void get_user_input(char* message, char* response)
       printf("Error acquiring user input\n");
       end_program(1);
     }
-  } while (sscanf_s(line, "%s", response, BUFSIZE) != 1);
+  } while (sscanf(line, "%s", response) != 1);
+  // } while (sscanf(line, "%s", response, BUFSIZE) != 1);
 
   return;
 }
