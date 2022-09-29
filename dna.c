@@ -244,14 +244,18 @@ int extract_dna(FILE* file_pointer, char** sample_segment, char*** candidate_seg
 void analyze_segments(char* sample_segment, char** candidate_segments, int number_of_candidates, char* output_string)
 {
   /* Some helpful variables you might want to use */
-  int* scores = NULL;
+  // int* scores = NULL;
   int sample_length = 0;
   int candidate_length = 0;
   int i = 0;
   int has_perfect_match = 0;
-  int score = 0;
+  // int score = 0;
   char outputline_buffer[BUFSIZE] = "\0";
   char int_buffer[BUFSIZE];
+
+  int temp_score = 0;
+  int max_score = 0;
+  int candidate_num_w_max_score = -1;
 
   /* Hint: Check to see if any candidate segment(s) are a perfect match, and report them
      (REMEMBER: don't ignore trailing nucleotides when searching for a perfect score)
@@ -265,19 +269,47 @@ void analyze_segments(char* sample_segment, char** candidate_segments, int numbe
           strcat(outputline_buffer, " is a perfect match\n");*/
 
   // Insert your code here
-
+  for (i = 0; i < number_of_candidates; i++) {
+    if (strcmp(sample_segment, candidate_segments[i]) == 0) {
+      // candiate is a perfect match
+      has_perfect_match = 1;
+      sprintf(int_buffer, "%d", i+1);
+      strcat(outputline_buffer, "Candidate number ");
+      strcat(outputline_buffer, int_buffer);
+      strcat(outputline_buffer, " is a perfect match\n");
+      strcat(output_string, outputline_buffer);
+    }
+  }
+  
   /* Hint: Return early if we have found and reported perfect match(es) */
 
   // Insert your code here
+  if (has_perfect_match != 0) {
+    return;
+  }
 
   /* Hint: Otherwise we need to calculate and print all of the scores by invoking
      calculate_score for each candidate_segment. Write an output line for each
      candidate_segment and concatenate your line to output_string.
      Don't forget to clear your outputline_buffer for each new line*/
-  for (i = 0; i < number_of_candidates; ++i) {
-
+  for (i = 0; i < number_of_candidates; i++) {
+    // find best match by calculating score for candidate
     // Insert your code here - maybe a call to calculate_score?
+    temp_score = calculate_score(sample_segment, candidate_segments[i]);
+    if (temp_score > max_score) {
+      max_score = temp_score;
+      candidate_num_w_max_score = i+1;
+    }
+    
   }
+  sprintf(int_buffer, "%d", candidate_num_w_max_score);
+  strcat(outputline_buffer, "Candidate number ");
+  strcat(outputline_buffer, int_buffer);
+  strcat(outputline_buffer, " matches with a score of ");
+  sprintf(int_buffer, "%d", max_score);
+  strcat(outputline_buffer, int_buffer);
+  strcat(outputline_buffer, "\n");
+  strcat(output_string, outputline_buffer);
 
   /* End of function */
   return;
@@ -321,7 +353,30 @@ int calculate_score(char* sample_segment, char* candidate_segment)
   int sample_length = strlen(sample_segment);
   int candidate_length = strlen(candidate_segment);
   int sample_length_in_codons = sample_length / 3;
+  // char* length_start;
+//   char* candidate_codon;
+//   char* sample_codon;
+  char sample_codon[CODON_LENGTH+1] = "   ";
+  char candidate_codon[CODON_LENGTH+1] = "   ";
 
   // Insert your code here (replace this return statement with your own code)
-  return 0;
+  for (int i = 0; (i+sample_length_in_codons*3-1) < candidate_length; i=i+3) {
+    for (int j = 0; j < sample_length_in_codons*3; j=j+3) {
+    //   strncpy(sample_codon, &sample_segment[i+j], CODON_LENGTH);
+    //   strncpy(candidate_codon, &candidate_segment[j], CODON_LENGTH);
+    //   printf("sample codon[%d]: %s, candidate codon[%d] %s\n", i, sample_codon, j, candidate_codon);
+
+      strncpy(sample_codon, &sample_segment[j], CODON_LENGTH);
+      strncpy(candidate_codon, &candidate_segment[i+j], CODON_LENGTH);
+      // printf("sample codon[%d]: %s, candidate codon[%d] %s\n", j, sample_codon, i+j, candidate_codon);
+
+      if (strcmp(sample_codon, candidate_codon) == 0) {
+        score +=10;
+      }
+    }
+    printf("\n");
+    
+  }
+  return score;
+  // return strlen(candidate_segment);
 }
