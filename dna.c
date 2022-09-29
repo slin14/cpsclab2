@@ -249,9 +249,12 @@ void analyze_segments(char* sample_segment, char** candidate_segments, int numbe
   int candidate_length = 0;
   int i = 0;
   int has_perfect_match = 0;
-  // int score = 0;
+  int score = 0;
   char outputline_buffer[BUFSIZE] = "\0";
   char int_buffer[BUFSIZE];
+
+  // score = (int*)malloc(number_of_candidates*sizeof(int));
+
 
   int temp_score = 0;
   int max_score = 0;
@@ -295,25 +298,41 @@ void analyze_segments(char* sample_segment, char** candidate_segments, int numbe
   for (i = 0; i < number_of_candidates; i++) {
     // find best match by calculating score for candidate
     // Insert your code here - maybe a call to calculate_score?
-    temp_score = calculate_score(sample_segment, candidate_segments[i]);
-    if (temp_score > max_score) {
-      max_score = temp_score;
-      candidate_num_w_max_score = i+1;
-    }
+    score = calculate_score(sample_segment, candidate_segments[i]);
+    sprintf(int_buffer, "%d", i+1);
+    strcat(output_string, "Candidate number ");
+    strcat(output_string, int_buffer);
+    strcat(output_string, " matches with a score of ");
+    sprintf(int_buffer, "%d", score);
+    strcat(output_string, int_buffer);
+    strcat(output_string, "\n");
     
   }
-  sprintf(int_buffer, "%d", candidate_num_w_max_score);
-  strcat(outputline_buffer, "Candidate number ");
-  strcat(outputline_buffer, int_buffer);
-  strcat(outputline_buffer, " matches with a score of ");
-  sprintf(int_buffer, "%d", max_score);
-  strcat(outputline_buffer, int_buffer);
-  strcat(outputline_buffer, "\n");
-  strcat(output_string, outputline_buffer);
+  
 
   /* End of function */
   return;
 }
+
+// returns index in codon_codes
+int codon_codes_index (char* codon) {
+  int index = 0;
+  for (int i = 0; i < NUMBER_OF_CODONS; i++) {
+    if (strcmp(codon, codon_codes[i]) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int same_amino_acid (char* a, char* b) {
+  int index_a = codon_codes_index(a);
+  int index_b = codon_codes_index(b);
+
+  return strcmp(codon_names[index_a], codon_names[index_b]);
+}
+
+
 
 /*
  * Compares the sample segment and the candidate segment and calculates a
@@ -353,28 +372,46 @@ int calculate_score(char* sample_segment, char* candidate_segment)
   int sample_length = strlen(sample_segment);
   int candidate_length = strlen(candidate_segment);
   int sample_length_in_codons = sample_length / 3;
-  // char* length_start;
-//   char* candidate_codon;
-//   char* sample_codon;
+
   char sample_codon[CODON_LENGTH+1] = "   ";
   char candidate_codon[CODON_LENGTH+1] = "   ";
 
   // Insert your code here (replace this return statement with your own code)
   for (int i = 0; (i+sample_length_in_codons*3-1) < candidate_length; i=i+3) {
+    temp_score = 0;
     for (int j = 0; j < sample_length_in_codons*3; j=j+3) {
-    //   strncpy(sample_codon, &sample_segment[i+j], CODON_LENGTH);
-    //   strncpy(candidate_codon, &candidate_segment[j], CODON_LENGTH);
-    //   printf("sample codon[%d]: %s, candidate codon[%d] %s\n", i, sample_codon, j, candidate_codon);
 
       strncpy(sample_codon, &sample_segment[j], CODON_LENGTH);
       strncpy(candidate_codon, &candidate_segment[i+j], CODON_LENGTH);
       // printf("sample codon[%d]: %s, candidate codon[%d] %s\n", j, sample_codon, i+j, candidate_codon);
 
       if (strcmp(sample_codon, candidate_codon) == 0) {
-        score +=10;
+        temp_score +=10;
+        // printf("codon match, score + 10, score = %d\n", score);
+      }
+      else if (same_amino_acid(sample_codon, candidate_codon) == 0) {
+        temp_score +=5;
+        // printf("same amino acid, score + 5, score = %d\n", score);
+      }
+      else {
+        // printf("looping through nucleotides...\n");
+        for (int k = 0; k < CODON_LENGTH; k++) {
+          // check each nucleotide in codon
+          if (sample_codon[k] == candidate_codon[k]) {
+            temp_score +=2;
+            // printf("same nucleotide, score + 2, score = %d, nucleotide # %d\n", score, k);
+          }
+          else if (is_base_pair(sample_codon[k], candidate_codon[k])) {
+            temp_score += 1;
+            // printf("same base pair, score + 1, score = %d, nucleotide # %d\n", score, k);
+          }
+        }
       }
     }
-    printf("\n");
+    if (temp_score > score) {
+      score = temp_score;
+    }
+    // printf("\n");
     
   }
   return score;
